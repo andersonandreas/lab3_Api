@@ -25,14 +25,14 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 
-app.MapGet("api/persons", PersonEndpoints.Get);
-app.MapGet("api/person/{id:int}", PersonEndpoints.GetById);
-app.MapGet("api/person/{id:int}/interests", PersonEndpoints.GetInterestsForAPerson);
-app.MapGet("api/person/{id:int}/links", PersonEndpoints.GetLinksForAPerson);
+//app.MapGet("api/persons", PersonEndpoints.Get);
+//app.MapGet("api/person/{id:int}", PersonEndpoints.GetById);
+//app.MapGet("api/person/{id:int}/interests", PersonEndpoints.GetInterestsForAPerson);
+//app.MapGet("api/person/{id:int}/links", PersonEndpoints.GetLinksForAPerson);
 
 
 
-
+app.PersonApiExtensions();
 
 
 
