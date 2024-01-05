@@ -43,7 +43,8 @@ namespace lab3_Api.Endpoints
                 })
                 .ToList();
 
-                return persons.Count > 0 ? TypedResults.Ok(persons) : TypedResults.NotFound();
+                return persons.Count > 0 ?
+                TypedResults.Ok(persons) : TypedResults.NotFound();
             })
 
                 .WithTags("Get")
@@ -72,7 +73,8 @@ namespace lab3_Api.Endpoints
                 })
                 .ToList();
 
-                return interests.Count > 0 ? TypedResults.Ok(interests) : TypedResults.NotFound();
+                return interests.Count > 0 ?
+                TypedResults.Ok(interests) : TypedResults.NotFound();
             })
                .WithName("GetInterestByPersonId")
                .WithTags("Get")
@@ -87,6 +89,64 @@ namespace lab3_Api.Endpoints
                });
 
 
+
+            // TODO
+            // get the person by id with all the interests and links
+
+            endPointBuilder.MapGet("/{id:int}/all-info",
+                async Task<Results<Ok<PersonAllInfoViewModel>, NotFound>> (PersonDbContext db, int id) =>
+            {
+
+                var person = await db.Persons
+                .Include(p => p.InterestRelation)
+                .ThenInclude(i => i.Interest)
+                .ThenInclude(l => l.Links)
+                .FirstOrDefaultAsync(P => P.Id == id);
+
+                if (person == null)
+                {
+                    return TypedResults.NotFound();
+                }
+
+
+                var result = new PersonAllInfoViewModel
+                {
+                    Id = person.Id,
+                    FirstName = person.FirstName,
+                    LastName = person.LastName,
+                    PhoneNumber = person.PhoneNumber,
+                    Interests = person.InterestRelation
+                    .Select(i => new InterestVewModel
+                    {
+                        Id = i.Interest.Id,
+                        Title = i.Interest.Title,
+                        Description = i.Interest.Description,
+                    })
+                    .ToList(),
+                    Links = person.InterestRelation
+                    .SelectMany(il => il.Interest.Links)
+                    .Select(l => new LinkViewModel
+                    {
+                        Id = l.Id,
+                        Url = l.Url,
+                    })
+                    .ToList()
+                };
+
+                return TypedResults.Ok(result);
+
+            })
+               .WithName("GetInfoPerson")
+               .WithTags("Get")
+               .WithOpenApi(op =>
+               {
+                   op.Summary = "Get all info about person";
+                   op.Description = "Get all info for a specific person with the person id";
+
+                   op.Parameters[0].Description = "The id of the person";
+
+                   return op;
+               });
 
 
             // link by person id
@@ -126,7 +186,7 @@ namespace lab3_Api.Endpoints
             // add interest for a person 
 
             endPointBuilder.MapPost("/{id:int}/add-interest",
-               async Task<Results<UnprocessableEntity, CreatedAtRoute<InterestsDto>, BadRequest>>
+               async Task<Results<UnprocessableEntity, CreatedAtRoute<InterestsDto>, NotFound>>
                         (PersonDbContext db, int id, [FromBody] InterestsDto interest) =>
                {
 
@@ -134,7 +194,7 @@ namespace lab3_Api.Endpoints
 
                    if (person == null)
                    {
-                       return TypedResults.BadRequest();
+                       return TypedResults.NotFound();
                    }
 
                    var addInterest = new Interest
@@ -184,7 +244,7 @@ namespace lab3_Api.Endpoints
             // add link to a interest
 
             endPointBuilder.MapPost("/{personId:int}/interest/{interestId:int}/add-link",
-                async Task<Results<UnprocessableEntity, CreatedAtRoute<LinkDto>, BadRequest>>
+                async Task<Results<UnprocessableEntity, CreatedAtRoute<LinkDto>, NotFound>>
                         (PersonDbContext db, int personId, int interestId, [FromBody] LinkDto linkDto) =>
                 {
 
@@ -202,7 +262,7 @@ namespace lab3_Api.Endpoints
 
                     if (person == null)
                     {
-                        return TypedResults.BadRequest();
+                        return TypedResults.NotFound();
                     }
 
                     var interestRelation = person.InterestRelation?
@@ -210,15 +270,14 @@ namespace lab3_Api.Endpoints
 
                     if (interestRelation == null)
                     {
-                        return TypedResults.BadRequest();
+                        return TypedResults.NotFound();
                     }
 
                     var interest = interestRelation.Interest;
 
                     if (interest == null)
                     {
-                        // need to fix so i can return not found
-                        return TypedResults.BadRequest();
+                        return TypedResults.NotFound();
                     }
 
                     var newLink = new Link
