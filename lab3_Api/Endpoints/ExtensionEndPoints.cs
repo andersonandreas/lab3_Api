@@ -18,8 +18,7 @@ namespace lab3_Api.Endpoints
             var grpEndPointBuilder = endPointBuilder.MapGroup("api/person");
 
 
-
-            endPointBuilder.MapGet("/", GetAllPersons)
+            endPointBuilder.MapGet("/", GetAllPersonsAsync)
                 .WithTags("Get")
                 .WithOpenApi(op =>
                 {
@@ -28,9 +27,7 @@ namespace lab3_Api.Endpoints
                 });
 
 
-
-
-            endPointBuilder.MapGet("/{id:int}/interests", GetAllInterestForAPersonById)
+            endPointBuilder.MapGet("/{id:int}/interests", GetAllInterestForAPersonByIdAsync)
                 .WithName("GetInterestByPersonId")
                 .WithTags("Get")
                 .WithOpenApi(op =>
@@ -43,9 +40,7 @@ namespace lab3_Api.Endpoints
                 });
 
 
-
-
-            endPointBuilder.MapGet("/{id:int}/all-info", GetAllPersonInfo)
+            endPointBuilder.MapGet("/{id:int}/all-info", GetAllPersonInfoAsync)
                 .WithName("GetInfoPerson")
                 .WithTags("Get")
                 .WithOpenApi(op =>
@@ -58,9 +53,7 @@ namespace lab3_Api.Endpoints
                 });
 
 
-
-
-            endPointBuilder.MapGet("/{id:int}/links", GetAllLinkForAPersonById)
+            endPointBuilder.MapGet("/{id:int}/links", GetAllLinkForAPersonByIdAsync)
                 .WithName("GetLinkByPersonId")
                 .WithTags("Get")
                 .WithOpenApi(op =>
@@ -73,9 +66,7 @@ namespace lab3_Api.Endpoints
                 });
 
 
-
-
-            endPointBuilder.MapPost("/{id:int}/add-interest", AddInterestToAPerson)
+            endPointBuilder.MapPost("/{id:int}/add-interest", AddInterestToAPersonAsync)
                .WithName("AddInterestToAPerson")
                .WithTags("Post")
                .WithOpenApi(op =>
@@ -88,9 +79,7 @@ namespace lab3_Api.Endpoints
                 .Produces<Interest>(StatusCodes.Status201Created);
 
 
-
-
-            endPointBuilder.MapPost("/{personId:int}/interest/{interestId:int}/add-link", AddLinkToAInterest)
+            endPointBuilder.MapPost("/{personId:int}/interest/{interestId:int}/add-link", AddLinkToAInterestAsync)
                 .WithName("AddLinkToInterest")
                 .Produces(StatusCodes.Status201Created)
                 .WithTags("Post")
@@ -104,21 +93,18 @@ namespace lab3_Api.Endpoints
                 });
 
 
-
-
-
-
             return endPointBuilder;
-
         }
 
 
 
 
-        // i want to move this code out and clean all this up, but i don't have time..
+        // I want to move this code out and clean all this up, but i don't have time..
+        // I also should check for exceptions with try catch and give back better response when some 500 error happens to the user that uses my api
+        // im plan to do this with controllers for more practice in the future
 
         // all methods for the endpoints
-        private static async Task<Results<Ok<List<PersonViewModel>>, NotFound>> GetAllPersons(PersonDbContext db)
+        private static async Task<Results<Ok<List<PersonViewModel>>, NotFound>> GetAllPersonsAsync(PersonDbContext db)
         {
 
             var personList = await db.Persons.ToListAsync();
@@ -136,8 +122,7 @@ namespace lab3_Api.Endpoints
         }
 
 
-
-        private static async Task<Results<Ok<List<InterestVewModel>>, NotFound>> GetAllInterestForAPersonById(PersonDbContext db, int id)
+        private static async Task<Results<Ok<List<InterestVewModel>>, NotFound>> GetAllInterestForAPersonByIdAsync(PersonDbContext db, int id)
         {
 
             var interestPersonList = await db.InterestRelation
@@ -156,7 +141,8 @@ namespace lab3_Api.Endpoints
             TypedResults.Ok(interests) : TypedResults.NotFound();
         }
 
-        private static async Task<Results<Ok<PersonAllInfoViewModel>, NotFound>> GetAllPersonInfo(PersonDbContext db, int id)
+
+        private static async Task<Results<Ok<PersonAllInfoViewModel>, NotFound>> GetAllPersonInfoAsync(PersonDbContext db, int id)
         {
 
             var person = await db.Persons
@@ -176,7 +162,7 @@ namespace lab3_Api.Endpoints
         }
 
 
-        private static async Task<Results<Ok<List<LinkViewModel>>, NotFound>> GetAllLinkForAPersonById(PersonDbContext db, int id)
+        private static async Task<Results<Ok<List<LinkViewModel>>, NotFound>> GetAllLinkForAPersonByIdAsync(PersonDbContext db, int id)
         {
             var linkPersonList = await db.InterestRelation
                    .Where(i => i.PersonId == id)
@@ -195,8 +181,7 @@ namespace lab3_Api.Endpoints
         }
 
 
-
-        private static async Task<Results<UnprocessableEntity, CreatedAtRoute<InterestsDto>, NotFound>> AddInterestToAPerson
+        private static async Task<Results<UnprocessableEntity, CreatedAtRoute<InterestsDto>, NotFound>> AddInterestToAPersonAsync
                         (PersonDbContext db, int id, [FromBody] InterestsDto interest)
         {
 
@@ -240,8 +225,7 @@ namespace lab3_Api.Endpoints
         }
 
 
-
-        private static async Task<Results<UnprocessableEntity, CreatedAtRoute<LinkDto>, NotFound>> AddLinkToAInterest
+        private static async Task<Results<UnprocessableEntity, CreatedAtRoute<LinkDto>, NotFound>> AddLinkToAInterestAsync
 
                         (PersonDbContext db, int personId, int interestId, [FromBody] LinkDto linkDto)
         {
@@ -289,8 +273,6 @@ namespace lab3_Api.Endpoints
                 routeValues: new { personId = person.Id, interestId = interest.Id },
                 value: new LinkDto { Url = newLink.Url });
         }
-
-
 
 
 
